@@ -51,12 +51,22 @@ class Operations extends React.Component {
 		};
 	}
 
-	componentDidUpdate(prevProps) {
+	//prevProps.lhs !== this.props.lhs ||
+	//prevProps.rule !== this.props.rule
+
+	componentDidUpdate(prevProps, prevState) {
 		if (
 			prevProps.lhs !== this.props.lhs ||
 			prevProps.rule !== this.props.rule
 		) {
 			this.handleOperation(prevProps);
+		} else {
+			if (
+				this.props.rule === "=" &&
+				prevState.result !== this.state.result
+			) {
+				this.props.dispFunc(this.state.result);
+			}
 		}
 	}
 
@@ -92,15 +102,17 @@ class Operations extends React.Component {
 			});
 		} else {
 		}
-		//this.props.dispFunc(this.state.result);
+	};
+	//	{this.props.disp[this.props.disp.length - 1]}
+	displayResult = () => {
+		this.props.dispFunc(this.state.result);
 	};
 
 	render() {
 		if (this.props.rule === "=") {
-			//this.props.dispFunc(this.state.result);
 			return <p>{this.state.result}</p>;
 		} else {
-			return <p>{this.props.disp[this.props.disp.length - 1]}</p>;
+			return <p>0</p>;
 		}
 	}
 }
@@ -161,7 +173,6 @@ class App extends React.Component {
 				this.setState({
 					left: temp,
 					value: input === "+" || input === "-" ? 0 : 1,
-					//right: input === "+" || input === "-" ? 0 : 1,
 					right:
 						this.state.operation === "*" ||
 						this.state.operation === "/"
@@ -193,12 +204,21 @@ class App extends React.Component {
 	updateDisplay = (val) => {
 		let temp = this.state.display;
 
-		if (this.state.operation === "=" && Number.isInteger(val)) {
-			this.setState({
-				display: val.toString(),
-			});
-			console.log("hi");
-			//this.state.display.toString() +
+		if (this.state.operation === "=") {
+			if (Number.isInteger(val)) {
+				this.setState({
+					display: this.state.display.toString() + val.toString(),
+				});
+			} else {
+				let find = /=[0-9]+/;
+
+				let store = temp.match(find);
+				console.log(store);
+				store = store[0].slice(1, store[0].length);
+				this.setState({
+					display: store + val.toString(),
+				});
+			}
 		} else {
 			if (
 				Number.isInteger(val) ||
@@ -229,6 +249,7 @@ class App extends React.Component {
 		});
 	};
 
+	//disp={this.state.display}
 	render() {
 		return (
 			<div className="wrapper">
@@ -238,7 +259,6 @@ class App extends React.Component {
 					rhs={this.state.right}
 					rule={this.state.operation}
 					dispFunc={this.updateDisplay}
-					disp={this.state.display}
 				/>
 				<Calculator get={this.getInput} />
 			</div>
