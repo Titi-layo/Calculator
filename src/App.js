@@ -206,9 +206,16 @@ class App extends React.Component {
 
 		if (this.state.operation === "=") {
 			if (Number.isInteger(val)) {
-				this.setState({
-					display: this.state.display.toString() + val.toString(),
-				});
+				if (/=[0-9]+/.test(this.state.display) == 0) {
+					this.setState({
+						display: this.state.display.toString() + val.toString(),
+					});
+				} else {
+					this.setState({
+						display: val.toString(),
+						operation: " ",
+					});
+				}
 			} else {
 				let find = /=[0-9]+/;
 
