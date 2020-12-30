@@ -51,14 +51,8 @@ class Operations extends React.Component {
 		};
 	}
 
-	//prevProps.lhs !== this.props.lhs ||
-	//prevProps.rule !== this.props.rule
-
 	componentDidUpdate(prevProps, prevState) {
-		if (
-			prevProps.lhs !== this.props.lhs ||
-			prevProps.rule !== this.props.rule
-		) {
+		if (prevProps.lhs !== this.props.lhs) {
 			this.handleOperation(prevProps);
 		} else {
 			if (
@@ -84,35 +78,30 @@ class Operations extends React.Component {
 				result: this.props.lhs,
 			});
 		} else if (prev.rule === "+") {
-			console.log(15 / 5);
 			this.setState({
-				result: this.state.result + this.props.lhs + this.props.rhs,
+				result: this.state.result + this.props.lhs,
 			});
 		} else if (prev.rule === "*") {
 			this.setState({
-				result: this.state.result * this.props.lhs * this.props.rhs,
+				result: this.state.result * this.props.lhs,
 			});
 		} else if (prev.rule === "-") {
 			this.setState({
-				result: this.state.result - this.props.lhs - this.props.rhs,
+				result: this.state.result - this.props.lhs,
 			});
 		} else if (prev.rule === "/") {
 			this.setState({
-				result: this.state.result / this.props.lhs / this.props.rhs,
+				result: this.state.result / this.props.lhs,
 			});
 		} else {
 		}
-	};
-	//	{this.props.disp[this.props.disp.length - 1]}
-	displayResult = () => {
-		this.props.dispFunc(this.state.result);
 	};
 
 	render() {
 		if (this.props.rule === "=") {
 			return <p>{this.state.result}</p>;
 		} else {
-			return <p>0</p>;
+			return <p></p>;
 		}
 	}
 }
@@ -120,15 +109,79 @@ class Operations extends React.Component {
 class Calculator extends React.Component {
 	constructor(props) {
 		super(props);
+		this.state = {
+			left: 0,
+			value: " ",
+			operation: " ",
+		};
 	}
+
+	handleInput = (input) => {
+		let temp = this.props.displ.toString();
+		if (input === "=" && this.state.value) {
+			this.setState({
+				left: parseFloat(this.state.value),
+				value: 0,
+				operation: input,
+			});
+		} else if (input === "AC") {
+			this.setState({
+				operation: input,
+				value: " ",
+			});
+			this.props.disp(" ");
+		} else if (!Number.isInteger(input) && input !== ".") {
+			if (this.state.value !== " ") {
+				this.props.disp(this.props.displ.toString() + input.toString());
+
+				this.setState({
+					left: parseFloat(this.state.value),
+					value: " ",
+					operation: input,
+				});
+			} else {
+				if (temp.length > 1) {
+					console.log(temp.length);
+					temp = temp.slice(0, temp.length - 1);
+					this.props.disp(temp + input);
+					this.setState({
+						operation: input,
+					});
+				}
+			}
+		} else {
+			if (this.state.value === 0) {
+				this.setState({
+					value: input.toString(),
+					operation: " ",
+				});
+				this.props.disp(input.toString());
+			} else {
+				this.setState({
+					value: this.state.value.toString() + input.toString(),
+				});
+				this.props.disp(this.props.displ.toString() + input.toString());
+			}
+		}
+	};
 
 	render() {
 		let digits;
 		digits = digitArr.map((dig) => {
-			return <Digit getter={this.props.get} digit={dig} />;
+			return <Digit getter={this.handleInput} digit={dig} />;
 		});
 
-		return <div className="calc">{digits}</div>;
+		return (
+			<React.Fragment>
+				<Operations
+					lhs={this.state.left}
+					rhs={this.state.right}
+					rule={this.state.operation}
+					dispFunc={this.props.disp}
+				/>
+				<div className="calc">{digits}</div>
+			</React.Fragment>
+		);
 	}
 }
 
@@ -136,114 +189,14 @@ class App extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			left: 0,
-			value: " ",
 			display: " ",
-			operation: " ",
-			right: 0,
 		};
 	}
 
-	getInput = (input) => {
-		this.updateDisplay(input);
-		this.handleInput(input);
-	};
-
-	handleInput = (input) => {
-		let temp;
-		if (input === "=" && this.state.value) {
-			temp = parseFloat(this.state.value);
-			this.setState({
-				right: temp,
-				left:
-					this.state.operation === "+" || this.state.operation === "-"
-						? 0
-						: 1,
-				value: 0,
-				operation: input,
-			});
-		} else if (input === "AC") {
-			this.clearDisplay();
-			this.setState({
-				operation: input,
-			});
-		} else if (!Number.isInteger(input) && input !== ".") {
-			if (this.state.value !== " ") {
-				temp = parseFloat(this.state.value);
-				this.setState({
-					left: temp,
-					value: input === "+" || input === "-" ? 0 : 1,
-					right:
-						this.state.operation === "*" ||
-						this.state.operation === "/"
-							? 1
-							: 0,
-					operation: input,
-				});
-			}
-		} else {
-			if (
-				Number.isInteger(
-					parseInt(this.state.display[this.state.display.length - 1])
-				) ||
-				this.state.display[this.state.display.length - 1] === "."
-			) {
-				temp = this.state.value.toString() + input.toString();
-				this.setState({
-					value: temp,
-				});
-			} else {
-				temp = input.toString();
-				this.setState({
-					value: temp,
-				});
-			}
-		}
-	};
-
 	updateDisplay = (val) => {
-		let temp = this.state.display;
-
-		if (this.state.operation === "=") {
-			if (Number.isInteger(val)) {
-				if (/=[0-9]+/.test(this.state.display) == 0) {
-					this.setState({
-						display: this.state.display.toString() + val.toString(),
-					});
-				} else {
-					this.setState({
-						display: val.toString(),
-						operation: " ",
-					});
-				}
-			} else {
-				let find = /=[0-9]+/;
-
-				let store = temp.match(find);
-				console.log(store);
-				store = store[0].slice(1, store[0].length);
-				this.setState({
-					display: store + val.toString(),
-				});
-			}
-		} else {
-			if (
-				Number.isInteger(val) ||
-				Number.isInteger(parseInt(temp[temp.length - 1]))
-			) {
-				let store = this.state.display.toString() + val.toString();
-				this.setState({
-					display: store,
-				});
-			} else {
-				if (!Number.isInteger(temp[temp.length - 1])) {
-					temp = temp.slice(0, temp.length - 1) + val.toString();
-					this.setState({
-						display: temp,
-					});
-				}
-			}
-		}
+		this.setState({
+			display: val,
+		});
 	};
 
 	clearDisplay = () => {
@@ -256,18 +209,14 @@ class App extends React.Component {
 		});
 	};
 
-	//disp={this.state.display}
 	render() {
 		return (
 			<div className="wrapper">
 				<div id="display">{this.state.display}</div>
-				<Operations
-					lhs={this.state.left}
-					rhs={this.state.right}
-					rule={this.state.operation}
-					dispFunc={this.updateDisplay}
+				<Calculator
+					disp={this.updateDisplay}
+					displ={this.state.display}
 				/>
-				<Calculator get={this.getInput} />
 			</div>
 		);
 	}
