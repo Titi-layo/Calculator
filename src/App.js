@@ -65,70 +65,6 @@ class Digit extends React.Component {
 	}
 }
 
-class Operations extends React.Component {
-	constructor(props) {
-		super(props);
-		this.state = {
-			result: 0,
-		};
-	}
-	//|| prevProps.operation !== this.props.operation
-	componentDidUpdate(prevProps, prevState) {
-		console.log("byeee");
-		if (prevProps.lhs !== this.props.lhs) {
-			this.handleOperation(prevProps);
-		} else {
-			if (
-				this.props.rule === "=" &&
-				prevState.result !== this.state.result
-			) {
-				this.props.dispFunc(this.state.result.toString());
-			}
-		}
-	}
-
-	handleOperation = (prev) => {
-		if (this.props.rule === "AC") {
-			this.setState({
-				result: 0,
-			});
-		} else if (prev.rule === "=") {
-			this.setState({
-				result: this.state.result,
-			});
-		} else if (prev.rule === "" || prev.rule === "AC") {
-			this.setState({
-				result: this.props.lhs,
-			});
-		} else if (prev.rule === "+") {
-			this.setState({
-				result: this.state.result + this.props.lhs,
-			});
-		} else if (prev.rule === "*") {
-			this.setState({
-				result: this.state.result * this.props.lhs,
-			});
-		} else if (prev.rule === "-") {
-			this.setState({
-				result: this.state.result - this.props.lhs,
-			});
-		} else if (prev.rule === "/") {
-			this.setState({
-				result: this.state.result / this.props.lhs,
-			});
-		} else {
-		}
-	};
-
-	render() {
-		if (this.props.rule === "=") {
-			return <p>{this.state.result}</p>;
-		} else {
-			return <p></p>;
-		}
-	}
-}
-
 class Calculator extends React.Component {
 	constructor(props) {
 		super(props);
@@ -136,8 +72,51 @@ class Calculator extends React.Component {
 			left: 0,
 			value: "",
 			operation: "",
+			result: 0,
 		};
 	}
+
+	componentDidUpdate(prevProps, prevState) {
+		console.log("byeee");
+
+		if (
+			this.state.operation === "=" &&
+			prevState.result !== this.state.result
+		) {
+			this.props.disp(this.state.result.toString());
+		}
+	}
+
+	handleOperation = (prev, input) => {
+		if (prev === "=") {
+			this.setState({
+				result: this.state.result,
+			});
+		} else if (prev === "" || prev === "AC") {
+			this.setState({
+				result: parseFloat(this.state.value),
+			});
+			console.log(this.state.left);
+		} else if (prev === "+") {
+			this.setState({
+				result: this.state.result + parseFloat(this.state.value),
+			});
+			console.log("i'm at the plus sign");
+		} else if (prev === "*") {
+			this.setState({
+				result: this.state.result * parseFloat(this.state.value),
+			});
+		} else if (prev === "-") {
+			this.setState({
+				result: this.state.result - parseFloat(this.state.value),
+			});
+		} else if (prev === "/") {
+			this.setState({
+				result: this.state.result / parseFloat(this.state.value),
+			});
+		} else {
+		}
+	};
 
 	handleInput = (input) => {
 		let temp = this.props.displ.toString();
@@ -147,15 +126,15 @@ class Calculator extends React.Component {
 				value: 0,
 				operation: input,
 			});
+			this.handleOperation(this.state.operation);
 		} else if (input === "AC") {
 			this.setState({
 				operation: input,
 				value: "",
 			});
 			this.props.disp(0);
+			this.handleOperation(this.state.operation);
 		} else if (!Number.isInteger(input) && input !== ".") {
-			//&& !Number.isInteger(temp[temp.length - 1])
-
 			if (this.state.value !== "" && this.state.value !== "-") {
 				this.props.disp(this.props.displ.toString() + input.toString());
 				this.setState({
@@ -163,9 +142,8 @@ class Calculator extends React.Component {
 					value: "",
 					operation: input,
 				});
+				this.handleOperation(this.state.operation, input);
 			} else if (temp.length > 1) {
-				//!Number.isInteger(temp[temp.length - 1])
-				// && Number.isInteger(pareseInt(temp[temp.lenth - 1]))
 				if (input === "-" && this.state.value !== "-") {
 					this.setState({
 						value: this.state.value.toString() + input.toString(),
@@ -197,8 +175,6 @@ class Calculator extends React.Component {
 						value: input.toString(),
 					});
 					this.props.disp(input.toString());
-					// this.props.displ.toString() +
-					//this.state.value.toString() +
 				}
 			}
 		} else {
@@ -235,11 +211,11 @@ class Calculator extends React.Component {
 
 		return (
 			<React.Fragment>
-				<Operations
-					lhs={this.state.left}
-					rule={this.state.operation}
-					dispFunc={this.props.disp}
-				/>
+				<p>
+					{this.state.operation === "=" && this.state.value === 0
+						? this.state.result
+						: ""}
+				</p>
 				<div className="calc">{digits}</div>
 			</React.Fragment>
 		);
