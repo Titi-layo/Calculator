@@ -33,7 +33,7 @@
 	width: calc(100% / 3);
 }
 
-#display {
+#input {
 	width: 40%;
 	height: 50px;
 	background-color: yellowgreen;

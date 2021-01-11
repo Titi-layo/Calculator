@@ -23,6 +23,11 @@ let digitArr = [
 	{ id: "equals", num: "=" },
 ];
 
+const isOperator = /[*/+‑]/;
+const endsWithOperator = /[*+-/]$/;
+const endsWithNegativeSign = /\d[*/+-]{1}-$/;
+const startsWithOperator = /^[*/]/;
+
 class Digit extends React.Component {
 	constructor(props) {
 		super(props);
@@ -69,135 +74,133 @@ class Calculator extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			left: 0,
+			curr: "0",
 			value: "",
-			operation: "",
-			result: 0,
+			result: "",
 		};
 	}
 
-	componentDidUpdate(prevProps, prevState) {
-		console.log("byeee");
+	handleNumbers = (input) => {
+		let store;
+		this.setState({
+			value:
+				this.state.value === ""
+					? input.toString()
+					: this.state.curr === "0"
+					? this.state.value.replace(/0$/, input)
+					: this.state.value.toString() + input.toString(),
+			curr:
+				isOperator.test(this.state.curr) ||
+				this.state.curr === "0" ||
+				this.state.value === ""
+					? input.toString()
+					: this.state.curr.toString() + input.toString(),
+		});
 
-		if (
-			this.state.operation === "=" &&
-			prevState.result !== this.state.result
-		) {
-			this.props.disp(this.state.result.toString());
-		}
-	}
+		store =
+			this.state.value === ""
+				? input.toString()
+				: this.state.curr === "0"
+				? this.state.value.replace(/0$/, input)
+				: this.state.value.toString() + input.toString();
 
-	handleOperation = (prev, input) => {
-		if (prev === "=") {
+		this.props.disp(store);
+	};
+
+	handleOperation = (input) => {
+		let temp = this.state.value.toString();
+
+		if (this.state.result) {
 			this.setState({
-				result: this.state.result,
+				value: this.state.curr.toString() + input.toString(),
+				curr: input.toString(),
+				result: "",
 			});
-		} else if (prev === "" || prev === "AC") {
+			console.log("hi");
+			this.props.disp(this.state.curr.toString() + input.toString());
+		} else if (!endsWithOperator.test(this.state.value)) {
+			this.props.disp(temp + input.toString());
 			this.setState({
-				result: parseFloat(this.state.value),
+				value: this.state.value.toString() + input.toString(),
+				curr: input.toString(),
 			});
-			console.log(this.state.left);
-		} else if (prev === "+") {
-			this.setState({
-				result: this.state.result + parseFloat(this.state.value),
-			});
-			console.log("i'm at the plus sign");
-		} else if (prev === "*") {
-			this.setState({
-				result: this.state.result * parseFloat(this.state.value),
-			});
-		} else if (prev === "-") {
-			this.setState({
-				result: this.state.result - parseFloat(this.state.value),
-			});
-		} else if (prev === "/") {
-			this.setState({
-				result: this.state.result / parseFloat(this.state.value),
-			});
+		} else if (!endsWithNegativeSign.test(this.state.value)) {
+			if (
+				endsWithNegativeSign.test(this.state.value + input.toString())
+			) {
+				this.setState({
+					value: this.state.value.toString() + input.toString(),
+					curr: input.toString(),
+				});
+
+				this.props.disp(this.state.value.toString() + input.toString());
+			} else {
+				temp = temp.slice(0, temp.length - 1);
+
+				this.setState({
+					value: temp.toString() + input.toString(),
+					curr: input.toString(),
+				});
+
+				this.props.disp(temp.toString() + input.toString());
+			}
 		} else {
+			if (input !== "-") {
+				temp = temp.slice(0, temp.length - 2);
+				this.props.disp(temp.toString() + input.toString());
+				this.setState({
+					value: temp.toString() + input.toString(),
+					curr: input.toString(),
+				});
+			}
 		}
 	};
 
+	clearDisplay = () => {
+		this.setState({
+			value: "",
+			curr: "0",
+		});
+		this.props.disp("");
+	};
+
 	handleInput = (input) => {
-		let temp = this.props.displ.toString();
-		if (input === "=" && this.state.value !== "") {
+		if (Number.isInteger(input)) {
+			this.handleNumbers(input);
+		} else if (input === "=") {
+			this.handleEvaluate();
+		} else if (input === "." && !this.state.curr.includes(".")) {
 			this.setState({
-				left: parseFloat(this.state.value),
-				value: 0,
-				operation: input,
+				value: this.state.value + input.toString(),
+				curr: this.state.curr + input.toString(),
 			});
-			this.handleOperation(this.state.operation);
+
+			this.props.disp(this.state.value + input.toString());
 		} else if (input === "AC") {
+			this.clearDisplay();
+		} else if (!Number.isInteger(input) && input !== ".") {
+			this.handleOperation(input);
+		}
+	};
+
+	handleEvaluate = () => {
+		if (this.state.value) {
+			let val = this.state.value;
+			while (endsWithOperator.test(val)) {
+				val = val.slice(0, -1);
+			}
+
+			while (startsWithOperator.test(val)) {
+				val = val.slice(1);
+			}
+
+			val = eval(val);
+			this.props.disp(this.state.value + "=" + val);
 			this.setState({
-				operation: input,
+				result: 1,
+				curr: val,
 				value: "",
 			});
-			this.props.disp(0);
-			this.handleOperation(this.state.operation);
-		} else if (!Number.isInteger(input) && input !== ".") {
-			if (this.state.value !== "" && this.state.value !== "-") {
-				this.props.disp(this.props.displ.toString() + input.toString());
-				this.setState({
-					left: parseFloat(this.state.value),
-					value: "",
-					operation: input,
-				});
-				this.handleOperation(this.state.operation, input);
-			} else if (temp.length > 1) {
-				if (input === "-" && this.state.value !== "-") {
-					this.setState({
-						value: this.state.value.toString() + input.toString(),
-					});
-					this.props.disp(
-						this.props.displ.toString() + input.toString()
-					);
-				} else {
-					let text;
-
-					if (this.state.value === "-" && input !== "-") {
-						text = /\D+$/;
-					} else {
-						text = /\D$/;
-					}
-
-					temp = temp.replace(text, input);
-
-					this.props.disp(temp);
-
-					this.setState({
-						operation: input !== "-" ? input : this.state.operation,
-						value: input === "-" ? "-" : "",
-					});
-				}
-			} else {
-				if (input === "+" || input === "-") {
-					this.setState({
-						value: input.toString(),
-					});
-					this.props.disp(input.toString());
-				}
-			}
-		} else {
-			if (this.state.value === 0) {
-				this.setState({
-					value: input.toString(),
-					operation: "",
-				});
-				this.props.disp(input.toString());
-			} else if (input === "." && this.state.value.includes(".")) {
-			} else if (this.state.value === "0" || this.props.displ === 0) {
-				this.setState({
-					value: input.toString(),
-				});
-
-				temp = temp.slice(0, temp.length - 1);
-				this.props.disp(temp + input.toString());
-			} else {
-				this.setState({
-					value: this.state.value.toString() + input.toString(),
-				});
-				this.props.disp(this.props.displ.toString() + input.toString());
-			}
 		}
 	};
 
@@ -211,11 +214,7 @@ class Calculator extends React.Component {
 
 		return (
 			<React.Fragment>
-				<p>
-					{this.state.operation === "=" && this.state.value === 0
-						? this.state.result
-						: ""}
-				</p>
+				<p id="display">{this.state.curr}</p>
 				<div className="calc">{digits}</div>
 			</React.Fragment>
 		);
@@ -226,33 +225,23 @@ class App extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			display: 0,
+			input: "",
 		};
 	}
 
 	updateDisplay = (val) => {
 		this.setState({
-			display: val,
-		});
-	};
-
-	clearDisplay = () => {
-		this.setState({
-			left: 0,
-			value: " ",
-			display: " ",
-			operation: " ",
-			right: 0,
+			input: val,
 		});
 	};
 
 	render() {
 		return (
 			<div className="wrapper">
-				<div id="display">{this.state.display}</div>
+				<div id="input">{this.state.input}</div>
 				<Calculator
 					disp={this.updateDisplay}
-					displ={this.state.display}
+					displ={this.state.input}
 				/>
 			</div>
 		);
